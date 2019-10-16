@@ -5,6 +5,7 @@ import com.sakal.binaryfileio.util.PrimitiveWrapperMapper;
 import com.sakal.binaryfileio.util.ReflectionUtil;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -26,17 +27,18 @@ public class BinaryReader {
         return new ConfigurationBuilder();
     }
 
-    public Object read() {
+    @SuppressWarnings("unchecked")
+    public <T> T read() {
         try {
             if (_dataInputStream.available() <= 0)
                 return null;
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Object result = null;
+        T result = null;
         try {
-            result = _dataClass.getConstructor().newInstance();
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            result = (T) _dataClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
         for (String fieldName : _fieldOrder.keySet()) {
@@ -51,7 +53,7 @@ public class BinaryReader {
                             _dataClass.getField(fieldName).set(result, returnData);
                         else {
                             Function func = _typeResolvers.get(fieldName);
-                            Object resolveData = func.apply(returnData);
+                            @SuppressWarnings("unchecked") Object resolveData = func.apply(returnData);
                             _dataClass.getField(fieldName).set(result, resolveData);
                         }
                     }
@@ -101,7 +103,7 @@ public class BinaryReader {
 
         public ConfigurationBuilder forReadObjectOf(Class dataClass) {
             _dataClass = dataClass;
-            _dataClassFields.addAll(Arrays.stream(_dataClass.getDeclaredFields()).map(field -> field.getName()).collect(Collectors.toList()));
+            _dataClassFields.addAll(Arrays.stream(_dataClass.getDeclaredFields()).map(Field::getName).collect(Collectors.toList()));
             return this;
         }
 

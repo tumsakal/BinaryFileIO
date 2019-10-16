@@ -4,6 +4,7 @@ import com.sakal.binaryfileio.util.PrimitiveWrapperMapper;
 import com.sakal.binaryfileio.util.ReflectionUtil;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -22,7 +23,7 @@ public class BinaryWriter {
         return new ConfigurationBuilder();
     }
 
-    public void write(Object objectData) {
+    public <T> void write(T objectData) {
         for (String field : _fieldOrder.keySet()) {
             Class fieldType = _fieldOrder.get(field);
             Method method = _methodWrites.get(fieldType);
@@ -38,6 +39,7 @@ public class BinaryWriter {
                     Function func = _typeResolvers.get(field);
                     if (func != null) {
                         try {
+                            //noinspection unchecked
                             dataArgument = func.apply(_dataClass.getDeclaredField(field).get(objectData));
                         } catch (IllegalAccessException | NoSuchFieldException e) {
                             e.printStackTrace();
@@ -89,14 +91,6 @@ public class BinaryWriter {
 
         public ConfigurationBuilder sourceFile(String fileName) {
             _fileName = fileName;
-            /*try {
-                File f = new File(_fileName);
-                FileOutputStream fileOutputStream = new FileOutputStream(f);
-                BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
-                _dataOutputStream = new DataOutputStream(bufferedOutputStream);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }*/
             return this;
         }
 
@@ -107,7 +101,7 @@ public class BinaryWriter {
 
         public ConfigurationBuilder forWriteObjectOf(Class dataClass) {
             _dataClass = dataClass;
-            _dataClassFields.addAll(Arrays.stream(_dataClass.getDeclaredFields()).map(field -> field.getName()).collect(Collectors.toList()));
+            _dataClassFields.addAll(Arrays.stream(_dataClass.getDeclaredFields()).map(Field::getName).collect(Collectors.toList()));
             return this;
         }
 
@@ -135,10 +129,7 @@ public class BinaryWriter {
             return this;
         }
 
-        // private DataOutputStream _dataOutputStream;
-
         public BinaryWriter build() {
-
             BinaryWriter writer = new BinaryWriter();
             writer._dataClass = _dataClass;
             writer._fieldOrder = _fieldOrder;
@@ -165,7 +156,6 @@ public class BinaryWriter {
                 }
             }
             writer._methodWrites = _methodWrites;
-            //writer._dataOutputStream = _dataOutputStream;
             return writer;
         }
     }
