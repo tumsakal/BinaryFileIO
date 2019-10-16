@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="BinaryFileIO:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/BinaryFileIO_jar</output-path>
+    <root id="archive" name="BinaryFileIO.jar">
+      <element id="module-output" name="BinaryFileIO" />
+    </root>
+  </artifact>
+</component>
